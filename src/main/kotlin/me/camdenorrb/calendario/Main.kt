@@ -1,12 +1,26 @@
 package me.camdenorrb.calendario
 
+import me.camdenorrb.calendario.Main.to12Hour
 import org.javacord.api.DiscordApiBuilder
 import java.time.DayOfWeek
 
 object Main {
 
     data class Busy(val userID: Long, val dayOfWeek: DayOfWeek, val timespan: IntRange)
-    data class Free(val userID: Long, val dayOfWeek: DayOfWeek, val timespan: IntRange)
+    // data class Free(val userID: Long, val dayOfWeek: DayOfWeek, val timespan: IntRange)
+
+    private fun Int.to12Hour(): String {
+
+        if (this !in 13..24) {
+            return "${this}AM"
+        }
+
+        return "${this - 12}PM"
+    }
+
+    /* private fun getFreeTime(start: Int, end: Int) {
+
+    } */
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -48,44 +62,35 @@ object Main {
 
                 it.channel.sendMessage("$schedule")
 
-            } else if (it.messageContent.startsWith("-freetime", true)) {
-                // TODO: Return the available freetimes for this week
-                var free = it.messageContent.split(' ').drop(1).windowed(2, 2, false) {
-                    (day, timeFrame) ->
-                    val dayOfWeek = checkNotNull(DayOfWeek.values().find { it.name.equals(day, true) }) {
-                        "Day of week invalid '$day"
-                    }
+                // freetime
 
-                    val (start, end) = checkNotNull(timeFrame.split('-').takeIf { it.size == 2 }) {
-                        "Invalid timeframe '$timeFrame"
-                    }
+                DayOfWeek.values().forEach { dayOfWeek ->
 
-                    var startTime = start.takeWhile { it.isDigit() }.toInt()
-                    var endTime = end.takeWhile { it.isDigit() }.toInt()
+                    var lastEndTime = 1
 
-                    check(startTime in 1..12) {
-                        "The start time is invalid: '$startTime"
-                    }
+                    schedule[dayOfWeek]?.forEach {
+                        val free = lastEndTime - it.timespan.start
+                        lastEndTime = it.timespan.endInclusive
 
-                    check(endTime in 1..12) {
-                        "The end time is invalid: '$endTime'"
-                    }
-
-                    if (end.contains("pm", true)) {
-                        if (endTime != 12) {
-                            endTime += 12
+                        client.addMessageCreateListener {
+                            it.channel.sendMessage(
+                                "Free $dayOfWeek: ${lastEndTime.to12Hour()} to " +
+                                        "${(free - lastEndTime).to12Hour()}"
+                            )
                         }
                     }
 
-                    Free(0L, dayOfWeek, startTime..endTime)
-                }.sortedBy { it.timespan.first }.groupBy { it.dayOfWeek }
 
-                it.channel.sendMessage("$free")
+                }
+
+
+            } // else if (it.messageContent.startsWith("-freetime", true)) {
+                // TODO: Return the available freetimes for this week
+
             }
-
+           // println("You can invite the bot by using the following url: ${client.createBotInvite()}")
         }
 
-        println("You can invite the bot by using the following url: ${client.createBotInvite()}")
+
     }
 
-}
