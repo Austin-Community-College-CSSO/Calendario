@@ -1,6 +1,7 @@
 package me.camdenorrb.calendario
 
 import org.javacord.api.DiscordApiBuilder
+import java.lang.Math.abs
 import java.time.DayOfWeek
 
 object Main {
@@ -9,17 +10,15 @@ object Main {
     // data class Free(val userID: Long, val dayOfWeek: DayOfWeek, val timespan: IntRange)
 
     private fun Int.to12Hour(): String {
-
-        if (this !in 13..24) {
-            return "${this}AM"
+        var returnValue: String
+        if (this !in 12..24) {
+            returnValue = "${this}AM"
+        } else {
+            returnValue = "${this - 12}PM"
         }
 
-        return "${this - 12}PM"
+        return returnValue
     }
-
-    /* private fun getFreeTime(start: Int, end: Int) {
-
-    } */
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -74,8 +73,6 @@ object Main {
 
                 // freetime
 
-
-
                 schedule.forEach { (day, daySchedule) ->
 
                     val newDaySchedule = mutableListOf<Busy>()
@@ -90,25 +87,24 @@ object Main {
                             return@indices
                         }
 
-                        if (curr.timespan.last == next.timespan.first) {
-                            newDaySchedule
-                        }
                     }
                 }
 
                 DayOfWeek.values().forEach { dayOfWeek ->
 
-                    var lastEndTime = 1
+                    var lastEndTime = 0
 
-                    val message = schedule[dayOfWeek]?.joinToString(prefix = "${dayOfWeek.name.toLowerCase().capitalize()}: ") {
-
+                    val message = schedule[dayOfWeek]?.joinToString(prefix = "Free ${dayOfWeek.name.toLowerCase().capitalize()}: ") {
                         val timeRange = lastEndTime..it.timespan.first
+                        val secondTimeRange = it.timespan.last..lastEndTime
                         lastEndTime = it.timespan.last
 
-                        "[${timeRange.first.to12Hour()}, ${timeRange.last.to12Hour()}]"
+                        println(timeRange)
+                        println(secondTimeRange)
+
+                        "[${timeRange.first.to12Hour()} to ${timeRange.last.to12Hour()}]; " +
+                                "[${secondTimeRange.first.to12Hour()} to ${secondTimeRange.last.to12Hour()}]"
                     }
-
-
 
                     event.channel.sendMessage(message)
                 }
