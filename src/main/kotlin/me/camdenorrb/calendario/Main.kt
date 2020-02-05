@@ -1,6 +1,5 @@
 package me.camdenorrb.calendario
 
-import me.camdenorrb.calendario.Main.to12Hour
 import org.javacord.api.DiscordApiBuilder
 import java.time.DayOfWeek
 
@@ -24,14 +23,16 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
+
         val token = this.javaClass.classLoader.getResource("token.txt")!!.readText()
         val client = DiscordApiBuilder().setToken(token).login().join()
 
         // busy command:
-        client.addMessageCreateListener {
-            if (it.messageContent.startsWith("-busy", true)) {
+        client.addMessageCreateListener { event ->
+            if (event.messageContent.startsWith("-busy", true)) {
                 // -busy Monday 11am-5pm Tuesday 2pm-5pm wednesday n/a thursday 10am-1pm 5pm-9pm
-                val schedule = it.messageContent.split(' ').drop(1).windowed(2, 2, false) { (day, timeFrame) ->
+
+                val schedule = event.messageContent.split(' ').drop(1).windowed(2, 2, false) { (day, timeFrame) ->
                     val dayOfWeek = checkNotNull(DayOfWeek.values().find { it.name.equals(day, true) }) {
                         "Day of week invalid '$day"
                     }
@@ -60,7 +61,7 @@ object Main {
                     Busy(0L, dayOfWeek, startTime..endTime)
                 }.sortedBy { it.timespan.first }.groupBy { it.dayOfWeek }
 
-                it.channel.sendMessage("$schedule")
+                event.channel.sendMessage("$schedule")
 
                 // freetime
 
@@ -69,20 +70,11 @@ object Main {
                     var lastEndTime = 1
 
                     schedule[dayOfWeek]?.forEach {
-                        val free = lastEndTime - it.timespan.start
-                        lastEndTime = it.timespan.endInclusive
-
-                        client.addMessageCreateListener {
-                            it.channel.sendMessage(
-                                "Free $dayOfWeek: ${lastEndTime.to12Hour()} to " +
-                                        "${(free - lastEndTime).to12Hour()}"
-                            )
-                        }
+                        event.channel.sendMessage("Free $dayOfWeek: ${lastEndTime.to12Hour()} to ${it.timespan.first.to12Hour()}")
+                        lastEndTime = it.timespan.last
                     }
 
-
                 }
-
 
             } // else if (it.messageContent.startsWith("-freetime", true)) {
                 // TODO: Return the available freetimes for this week
