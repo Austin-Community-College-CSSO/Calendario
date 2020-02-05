@@ -1,7 +1,6 @@
 package me.camdenorrb.calendario
 
 import org.javacord.api.DiscordApiBuilder
-import java.lang.Math.abs
 import java.time.DayOfWeek
 
 object Main {
@@ -10,11 +9,22 @@ object Main {
     // data class Free(val userID: Long, val dayOfWeek: DayOfWeek, val timespan: IntRange)
 
     private fun Int.to12Hour(): String {
-        var returnValue: String
-        if (this !in 12..24) {
-            returnValue = "${this}AM"
-        } else {
-            returnValue = "${this - 12}PM"
+        var returnValue: String = ""
+        when {
+            this !in 12..24 -> {
+                returnValue = "${this}AM"
+            }
+            this == 0 -> {
+                returnValue = "12AM"
+            }
+            this in 12..24 -> {
+                returnValue = if (this == 0) {
+                    "12PM"
+                } else {
+                    "${this - 12}PM"
+                }
+
+            }
         }
 
         return returnValue
@@ -93,10 +103,11 @@ object Main {
                 DayOfWeek.values().forEach { dayOfWeek ->
 
                     var lastEndTime = 0
+                    // var midnightOrNoon = ""
 
                     val message = schedule[dayOfWeek]?.joinToString(prefix = "Free ${dayOfWeek.name.toLowerCase().capitalize()}: ") {
-                        val timeRange = lastEndTime..it.timespan.first
-                        val secondTimeRange = it.timespan.last..lastEndTime
+                        var timeRange = lastEndTime..it.timespan.first
+                        var secondTimeRange = it.timespan.last..lastEndTime
                         lastEndTime = it.timespan.last
 
                         println(timeRange)
