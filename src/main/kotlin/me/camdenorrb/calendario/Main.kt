@@ -6,29 +6,14 @@ import java.time.DayOfWeek
 object Main {
 
     data class Busy(val userID: Long, val dayOfWeek: DayOfWeek, val timespan: IntRange)
-    // data class Free(val userID: Long, val dayOfWeek: DayOfWeek, val timespan: IntRange)
 
-    private fun Int.to12Hour(): String {
-        var returnValue: String = ""
-        when {
-            this !in 12..24 -> {
-                returnValue = "${this}AM"
+    private fun Int.to12Hour(): String =
+        when (this) {
+            !in 13..24 -> {
+                "${this}AM"
             }
-            this == 0 -> {
-                returnValue = "12AM"
-            }
-            this in 12..24 -> {
-                returnValue = if (this == 0) {
-                    "12PM"
-                } else {
-                    "${this - 12}PM"
-                }
-
-            }
+            else -> "${this - 12}PM"
         }
-
-        return returnValue
-    }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -53,7 +38,7 @@ object Main {
                     }
 
                     var startTime = start.takeWhile { it.isDigit() }.toInt()
-                    var endTime   = end.takeWhile { it.isDigit() }.toInt()
+                    var endTime = end.takeWhile { it.isDigit() }.toInt()
 
                     check(startTime in 1..12) {
                         "The start time is invalid: '$startTime"
@@ -79,8 +64,6 @@ object Main {
 
                 }.sortedBy { it.timespan.first }.groupBy { it.dayOfWeek }.toMutableMap()
 
-                //event.channel.sendMessage("$schedule")
-
                 // freetime
 
                 schedule.forEach { (day, daySchedule) ->
@@ -103,30 +86,30 @@ object Main {
                 DayOfWeek.values().forEach { dayOfWeek ->
 
                     var lastEndTime = 0
-                    // var midnightOrNoon = ""
 
-                    val message = schedule[dayOfWeek]?.joinToString(prefix = "Free ${dayOfWeek.name.toLowerCase().capitalize()}: ") {
-                        var timeRange = lastEndTime..it.timespan.first
-                        var secondTimeRange = it.timespan.last..lastEndTime
-                        lastEndTime = it.timespan.last
+                    val message =
+                        schedule[dayOfWeek]?.joinToString(prefix = "Free ${dayOfWeek.name.toLowerCase().capitalize()}: ") {
+                            var timeRange = lastEndTime..it.timespan.first
+                            var secondTimeRange = it.timespan.last..lastEndTime
+                            lastEndTime = it.timespan.last
 
-                        println(timeRange)
-                        println(secondTimeRange)
+                            println(timeRange)
+                            println(secondTimeRange)
 
-                        "[${timeRange.first.to12Hour()} to ${timeRange.last.to12Hour()}]; " +
-                                "[${secondTimeRange.first.to12Hour()} to ${secondTimeRange.last.to12Hour()}]"
-                    }
+                            "[${timeRange.first.to12Hour()} to ${timeRange.last.to12Hour()}]; " +
+                                    "[${secondTimeRange.first.to12Hour()} to ${secondTimeRange.last.to12Hour()}]"
+                        }
 
                     event.channel.sendMessage(message)
                 }
 
             } // else if (it.messageContent.startsWith("-freetime", true)) {
-                // TODO: Return the available freetimes for this week
+            // TODO: Return the available freetimes for this week
 
-            }
-           // println("You can invite the bot by using the following url: ${client.createBotInvite()}")
         }
-
-
+        println("You can invite the bot by using the following url: ${client.createBotInvite()}")
     }
+
+
+}
 
