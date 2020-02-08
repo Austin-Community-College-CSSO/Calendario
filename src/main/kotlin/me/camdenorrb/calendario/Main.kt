@@ -7,13 +7,18 @@ object Main {
 
     data class Busy(val userID: Long, val dayOfWeek: DayOfWeek, val timespan: IntRange)
 
-    private fun Int.to12Hour(): String =
-        when (this) {
-            !in 13..24 -> {
-                "${this}AM"
-            }
-            else -> "${this - 12}PM"
+    private fun Int.to12Hour(): String = when (this) {
+
+        12 -> {
+            "${this}PM"
         }
+
+        in 1..11 -> {
+            "${this}AM"
+        }
+
+        else -> "${this - 12}PM"
+    }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -79,31 +84,33 @@ object Main {
                             newDaySchedule += curr
                             return@indices
                         }
-
                     }
                 }
 
-                DayOfWeek.values().forEach { dayOfWeek ->
+                val message = DayOfWeek.values().joinToString("\n") { dayOfWeek ->
 
-                    var lastEndTime = 0
+                    var lastEndTime = 1
 
-                    val message =
-                        schedule[dayOfWeek]?.joinToString(prefix = "Free ${dayOfWeek.name.toLowerCase().capitalize()}: ") {
-                            var timeRange = lastEndTime..it.timespan.first
-                            var secondTimeRange = it.timespan.last..lastEndTime
-                            lastEndTime = it.timespan.last
+                    val message = (schedule[dayOfWeek] ?: listOf()).joinToString(" ", prefix = "${dayOfWeek.name.toLowerCase().capitalize().padEnd(10)}: ") {
 
-                            println(timeRange)
-                            println(secondTimeRange)
+                        val timeRange = lastEndTime..it.timespan.first
+                        //val secondTimeRange = it.timespan.last..lastEndTime
 
-                            "[${timeRange.first.to12Hour()} to ${timeRange.last.to12Hour()}]; " +
-                                    "[${secondTimeRange.first.to12Hour()} to ${secondTimeRange.last.to12Hour()}]"
-                        }
+                        lastEndTime = it.timespan.last
+                        //println(secondTimeRange)
 
-                    event.channel.sendMessage(message)
+                        "[${timeRange.first.to12Hour().padStart(4, '0')} to ${timeRange.last.to12Hour().padStart(4, '0')}]"//; [${secondTimeRange.first.to12Hour()} to ${secondTimeRange.last.to12Hour()}]"
+                    }
+
+
+                    "$message${if (lastEndTime == 24) "" else "${if (lastEndTime != 1) " " else ""}[${lastEndTime.to12Hour().padStart(4, '0')} to 12AM]"}"
                 }
 
-            } // else if (it.messageContent.startsWith("-freetime", true)) {
+                event.channel.sendMessage("```$message```")
+
+            }
+
+            // else if (it.messageContent.startsWith("-freetime", t987rue)) {
             // TODO: Return the available freetimes for this week
 
         }
